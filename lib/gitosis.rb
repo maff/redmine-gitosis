@@ -4,16 +4,7 @@ require 'net/ssh'
 
 module Gitosis
   # server config
-  GITOSIS_URI = 'git@your-server.com:/gitosis-admin.git'
-  GITOSIS_BASE_PATH = '/opt/gitosis/repositories/'
-  
-  # commands
-  ENV['GIT_SSH'] = SSH_WITH_IDENTITY_FILE = File.join(RAILS_ROOT, 'vendor/plugins/redmine_gitosis/extra/ssh_with_identity_file.sh')
-  
-  def self.destroy_repository(project)
-    path = File.join(GITOSIS_BASE_PATH, "#{project.identifier}.git")
-    `rm -Rf #{path}`
-  end
+  GITOSIS_ADMIN_PATH = '/var/git/repositories/gitosis-admin.git'
   
   def self.update_repositories(projects)
     projects = (projects.is_a?(Array) ? projects : [projects])
@@ -28,7 +19,7 @@ module Gitosis
       Dir.mkdir local_dir
 
       # clone repo
-      `git clone #{GITOSIS_URI} #{local_dir}/gitosis`
+      `git clone #{GITOSIS_ADMIN_PATH} #{local_dir}/gitosis-admin`
     
       changed = false
     
@@ -40,16 +31,16 @@ module Gitosis
     
         # write key files
         users.map{|u| u.gitosis_public_keys.active}.flatten.compact.uniq.each do |key|
-          File.open(File.join(local_dir, 'gitosis/keydir',"#{key.identifier}.pub"), 'w') {|f| f.write(key.key.gsub(/\n/,'')) }
+          File.open(File.join(local_dir, 'gitosis-admin/keydir',"#{key.identifier}.pub"), 'w') {|f| f.write(key.key.gsub(/\n/,'')) }
         end
 
         # delete inactives
         users.map{|u| u.gitosis_public_keys.inactive}.flatten.compact.uniq.each do |key|
-          File.unlink(File.join(local_dir, 'gitosis/keydir',"#{key.identifier}.pub")) rescue nil
+          File.unlink(File.join(local_dir, 'gitosis-admin/keydir',"#{key.identifier}.pub")) rescue nil
         end
     
         # write config file
-        conf = IniFile.new(File.join(local_dir,'gitosis','gitosis.conf'))
+        conf = IniFile.new(File.join(local_dir,'gitosis-admin','gitosis.conf'))
         original = conf.clone
         name = "#{project.identifier}"
     
@@ -63,13 +54,13 @@ module Gitosis
     
       if changed
         # add, commit, push, and remove local tmp dir
-        `cd #{File.join(local_dir,'gitosis')} ; git add keydir/* gitosis.conf`
-        `cd #{File.join(local_dir,'gitosis')} ; git commit -a -m 'updated by Redmine Gitosis'`
-        `cd #{File.join(local_dir,'gitosis')} ; git push`
+        #`cd #{File.join(local_dir,'gitosis-admin')} ; git add keydir/* gitosis.conf`
+        #`cd #{File.join(local_dir,'gitosis-admin')} ; git commit -a -m 'updated by Redmine Gitosis'`
+        #`cd #{File.join(local_dir,'gitosis-admin')} ; git push`
       end
     
       # remove local copy
-      `rm -Rf #{local_dir}`
+      #`rm -Rf #{local_dir}`
           
     end
     

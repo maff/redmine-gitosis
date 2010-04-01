@@ -21,4 +21,4 @@ end
 User.send(:has_many, :gitosis_public_keys, :dependent => :destroy)
 
 # initialize observer
-# ActiveRecord::Base.observers = ActiveRecord::Base.observers << GitosisObserver
+ActiveRecord::Base.observers = ActiveRecord::Base.observers << GitosisObserver
